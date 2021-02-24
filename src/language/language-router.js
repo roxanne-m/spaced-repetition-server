@@ -25,6 +25,7 @@ languageRouter
     }
   })
 
+  // Comment on how this route works
 languageRouter
   .get('/', async (req, res, next) => {
     try {
