@@ -28,7 +28,7 @@ VALUES
   (5, 1, 'amor', 'love', 6),
   (6, 1, 'gracias', 'thank you', 7),
   (7, 1, 'noche', 'night', 8),
-  (8, 1, 'mañana', 'morning', 9),
+  (8, 1, 'manana', 'morning', 9),
   (9, 1, 'madrugada', 'early morning', 10),
   (10, 1, 'tarde', 'afternoon', null);
 

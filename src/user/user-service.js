@@ -65,7 +65,7 @@ const UserService = {
         ['amor', 'love', 6],
         ['gracias', 'thank you', 7],
         ['noche', 'night', 8],
-        ['mañana', 'morning', 9],
+        ['manana', 'morning', 9],
         ['madrugada', 'early morning', 10],
         ['tarde', 'afternoon', null],
       ]

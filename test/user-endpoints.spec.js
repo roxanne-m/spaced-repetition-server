@@ -182,7 +182,7 @@ describe('User Endpoints', function () {
             { original: 'amor', translation: 'love' },
             { original: 'gracias', translation: 'thank you' },
             { original: 'noche', translation: 'night' },
-            { original: 'mañana', translation: 'morning' },
+            { original: 'manana', translation: 'morning' },
             { original: 'madrugada', translation: 'early morning' },
             { original: 'tarde', translation: 'afternoon' },
           ]
