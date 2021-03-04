@@ -1,7 +1,7 @@
 const app = require('../src/app');
 const helpers = require('./test-helpers');
 
-describe.only('Language Endpoints', function () {
+describe('Language Endpoints', function () {
   let db;
 
   const testUsers = helpers.makeUsersArray();
@@ -190,17 +190,17 @@ describe.only('Language Endpoints', function () {
             nextWord: testLanguagesWords[1].original,
             totalScore: 0,
             wordCorrectCount: 0,
-            wordIncorrectCount: 1,
+            wordIncorrectCount: 0,
             answer: testLanguagesWords[0].translation,
             isCorrect: false,
           });
       });
 
       it(`moves the word 1 space and updates incorrect count`, async () => {
-        // await supertest(app)
-        //   .post(`/api/language/guess`)
-        //   .set('Authorization', helpers.makeAuthHeader(testUser))
-        //   .send(incorrectPostBody);
+        await supertest(app)
+          .post(`/api/language/guess`)
+          .set('Authorization', helpers.makeAuthHeader(testUser))
+          .send(incorrectPostBody);
 
         await supertest(app)
           .post(`/api/language/guess`)
