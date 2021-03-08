@@ -52,7 +52,8 @@ languageRouter.get('/head', async (req, res, next) => {
       req.app.get('db'),
       req.language.id
     );
-    const firstWord = words[0];
+    const firstWord = words.find((word) => word.id === req.language.id);
+    console.log(req.language, 'REQ LANGUAGE');
     res.json({
       nextWord: firstWord.original,
       wordCorrectCount: firstWord.correct_count,
@@ -80,25 +81,6 @@ languageRouter.post('/guess', jsonBodyParser, async (req, res, next) => {
 
     // create new linked list
     let list = new LinkedList();
-    // get head, insert into Linked list (pass in db and language head)
-    // let headNode = await LanguageService.getWordById(
-    //   spacedRepetitionDb,
-    //   req.language.head
-    // );
-
-    // list.insertFirst(headNode);
-
-    // get the rest of the words, insert into Linked list
-    // while condition to check if more words exist in db
-
-    // while (headNode.next !== null) {
-    //   let nextNode = await LanguageService.getWordById(
-    //     spacedRepetitionDb,
-    //     headNode.next
-    //   );
-    //   list.insertLast(nextNode);
-    //   headNode = nextNode;
-    // }
 
     // populate the linked list created with information
     let words = await LanguageService.populateLinkedList(
@@ -205,7 +187,7 @@ languageRouter.post('/guess', jsonBodyParser, async (req, res, next) => {
     LanguageService.insertNewLinkedList(spacedRepetitionDb, linkArray);
     LanguageService.updateLanguageTotalScore(spacedRepetitionDb, language);
     await LanguageService.updateHead(spacedRepetitionDb, language);
-
+    console.log(language, 'LANGUAGE');
     // return res.status(200).json(response);
     res.json(response), next();
   } catch (error) {
