@@ -34,6 +34,7 @@ VALUES
 
 UPDATE "language" SET head = 1 WHERE id = 1;
 
+
 -- because we explicitly set the id fields
 -- update the sequencer for future automatic id setting
 SELECT setval('word_id_seq', (SELECT MAX(id) from "word"));

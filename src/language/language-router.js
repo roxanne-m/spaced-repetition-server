@@ -52,8 +52,7 @@ languageRouter.get('/head', async (req, res, next) => {
       req.app.get('db'),
       req.language.id
     );
-    const firstWord = words.find((word) => word.id === req.language.id);
-    console.log(req.language, 'REQ LANGUAGE');
+    const firstWord = words.find((word) => word.id === req.language.head);
     res.json({
       nextWord: firstWord.original,
       wordCorrectCount: firstWord.correct_count,
