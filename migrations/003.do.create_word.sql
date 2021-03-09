@@ -1,4 +1,4 @@
-CREATE TABLE "word" (
+CREATE TABLE IF NOT EXISTS "word" (
   "id" SERIAL PRIMARY KEY,
   "original" TEXT NOT NULL,
   "translation" TEXT NOT NULL,
