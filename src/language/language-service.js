@@ -29,6 +29,7 @@ const LanguageService = {
       .where({ language_id });
   },
 
+  // ADDED WITH MIKE
   async SetLanguageHead(db, language_id, language) {
     await db('language')
       .where('language_id', '=', language_id)
@@ -50,6 +51,7 @@ const LanguageService = {
       )
       .where({ language_id });
     //a.map is populating the LL
+    // SORT ADDED WITH MIKE
     a.sort(
       (wordA, wordB) => wordA.memory_value - wordB.memory_value
     ).map((word) => ll.insertLast(word));

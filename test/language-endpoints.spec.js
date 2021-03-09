@@ -274,9 +274,9 @@ describe('Language Endpoints', function () {
           .set('Authorization', helpers.makeAuthHeader(testUser))
           .send(correctPostBody)
           .expect({
-            nextWord: testLanguagesWords[0].original,
+            nextWord: testLanguagesWords[3].original,
             totalScore: 3,
-            wordCorrectCount: 1,
+            wordCorrectCount: 0,
             wordIncorrectCount: 0,
             answer: testLanguagesWords[2].translation,
             isCorrect: true,

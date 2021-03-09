@@ -54,8 +54,13 @@ languageRouter.get('/head', async (req, res, next) => {
     );
 
     const firstword = words[0];
+
     res.json({
-      firstword,
+      // ADDED WITH MIKE
+      nextWord: firstword.original,
+      wordCorrectCount: firstword.correct_count,
+      wordIncorrectCount: firstword.incorrect_count,
+      totalScore: req.language.total_score,
     });
     next();
   } catch (error) {
@@ -107,14 +112,23 @@ languageRouter.post('/guess', jsonBodyParser, async (req, res, next) => {
       //add 1 to the total score counter
       language.total_score += 1;
       //this makes isCorrect key true
-      response = { ...response, isCorrect: true };
+      // ADDED WITH MIKE
+      response = {
+        ...response,
+        isCorrect: true,
+        totalScore: language.total_score,
+      };
     } else {
       //add to incorrect count
       link.head.value.incorrect_count++;
       //mem val goes up by one
       link.head.value.memory_value = 1;
       //incorrect false
-      response = { ...response, isCorrect: false };
+      // ADDED WITH MIKE
+      response = {
+        ...response,
+        isCorrect: false,
+      };
     }
     //grab memory value # from the current head
     m = link.head.value.memory_value;
@@ -160,10 +174,14 @@ languageRouter.post('/guess', jsonBodyParser, async (req, res, next) => {
       arrtemp = arrtemp.next;
     }
 
+    // ADDED WITH MIKE
+    response.nextWord = linkarr[0].original;
+
     //this updates the current altered array and current score
     await LanguageService.insertNewLinkedList(req.app.get('db'), linkarr);
     LanguageService.updateLanguagetotalScore(req.app.get('db'), language);
 
+    // ADDED WITH MIKE
     let lowestWord = (
       await LanguageService.getLanguageWords(req.app.get('db'), req.language.id)
     ).sort((wordA, wordB) => wordA.memory_value - wordB.memory_value)[0];
