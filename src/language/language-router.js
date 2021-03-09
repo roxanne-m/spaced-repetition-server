@@ -52,13 +52,9 @@ languageRouter.get('/head', async (req, res, next) => {
       req.app.get('db'),
       req.language.id
     );
-    // const firstWord = words.find((word) => word.id === req.language.head); COMMENTED OUT
+
     const firstword = words[0];
     res.json({
-      // nextWord: firstWord.original,
-      // wordCorrectCount: firstWord.correct_count,
-      // wordIncorrectCount: firstWord.incorrect_count,
-      // totalScore: req.language.total_score,
       firstword,
     });
     next();
@@ -68,8 +64,6 @@ languageRouter.get('/head', async (req, res, next) => {
 });
 
 languageRouter.post('/guess', jsonBodyParser, async (req, res, next) => {
-  // let spacedRepetitionDb = req.app.get('db');
-
   try {
     // destructure object
     const { guess } = req.body;
@@ -88,6 +82,7 @@ languageRouter.post('/guess', jsonBodyParser, async (req, res, next) => {
       req.language.id,
       link
     );
+
     //gets current users language from the DB
     const language = await LanguageService.getUsersLanguage(
       req.app.get('db'),
@@ -166,9 +161,16 @@ languageRouter.post('/guess', jsonBodyParser, async (req, res, next) => {
     }
 
     //this updates the current altered array and current score
-    LanguageService.insertNewLinkedList(req.app.get('db'), linkarr);
+    await LanguageService.insertNewLinkedList(req.app.get('db'), linkarr);
     LanguageService.updateLanguagetotalScore(req.app.get('db'), language);
 
+    let lowestWord = (
+      await LanguageService.getLanguageWords(req.app.get('db'), req.language.id)
+    ).sort((wordA, wordB) => wordA.memory_value - wordB.memory_value)[0];
+    LanguageService.SetLanguageHead(req.app.get('db'), language.id, {
+      ...language,
+      head: lowestWord,
+    });
     //send back response to client
     res.json(response), next();
     //catch the error

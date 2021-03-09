@@ -29,6 +29,12 @@ const LanguageService = {
       .where({ language_id });
   },
 
+  async SetLanguageHead(db, language_id, language) {
+    await db('language')
+      .where('language_id', '=', language_id)
+      .update(language);
+  },
+
   async PopulateLinkedlist(db, language_id, ll) {
     const a = await db
       .from('word')
@@ -44,7 +50,9 @@ const LanguageService = {
       )
       .where({ language_id });
     //a.map is populating the LL
-    a.map((word) => ll.insertLast(word));
+    a.sort(
+      (wordA, wordB) => wordA.memory_value - wordB.memory_value
+    ).map((word) => ll.insertLast(word));
     //return a is returning the aray of words from db
     return a;
   },
