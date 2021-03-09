@@ -52,12 +52,14 @@ languageRouter.get('/head', async (req, res, next) => {
       req.app.get('db'),
       req.language.id
     );
-    const firstWord = words.find((word) => word.id === req.language.head);
+    // const firstWord = words.find((word) => word.id === req.language.head); COMMENTED OUT
+    const firstword = words[0];
     res.json({
-      nextWord: firstWord.original,
-      wordCorrectCount: firstWord.correct_count,
-      wordIncorrectCount: firstWord.incorrect_count,
-      totalScore: req.language.total_score,
+      // nextWord: firstWord.original,
+      // wordCorrectCount: firstWord.correct_count,
+      // wordIncorrectCount: firstWord.incorrect_count,
+      // totalScore: req.language.total_score,
+      firstword,
     });
     next();
   } catch (error) {
@@ -66,7 +68,7 @@ languageRouter.get('/head', async (req, res, next) => {
 });
 
 languageRouter.post('/guess', jsonBodyParser, async (req, res, next) => {
-  let spacedRepetitionDb = req.app.get('db');
+  // let spacedRepetitionDb = req.app.get('db');
 
   try {
     // destructure object
@@ -78,117 +80,98 @@ languageRouter.post('/guess', jsonBodyParser, async (req, res, next) => {
       });
     }
 
-    // create new linked list
-    let list = new LinkedList();
-
-    // populate the linked list created with information
-    let words = await LanguageService.populateLinkedList(
-      spacedRepetitionDb,
+    // create new linkedlist
+    const link = new LinkedList();
+    //populate the new LL from the DB and returns an array of words
+    const words = await LanguageService.PopulateLinkedlist(
+      req.app.get('db'),
       req.language.id,
-      list,
-      req.language.head
+      link
     );
-    // get current user's language from database
-    let language = await LanguageService.getUsersLanguage(
-      spacedRepetitionDb,
+    //gets current users language from the DB
+    const language = await LanguageService.getUsersLanguage(
+      req.app.get('db'),
       req.user.id
     );
-
-    // create response object
+    //create response obj
     let response = {
-      nextWord: words[1].original, // second word in array of words
-      // totalScore: language.total_score, // total score from language object
-      wordCorrectCount: words[1].correct_count, // correct count from second word
-      wordIncorrectCount: words[1].incorrect_count, // incorrect count from second word
-      answer: words[0].translation, // translation from current words obj in words array
-      isCorrect: false, // set default correct to false
+      nextWord: words[1].original, //this is second word in array of words
+      wordCorrectCount: words[1].correct_count, //correct count from second word
+      wordIncorrectCount: words[1].incorrect_count, //incorrect count from second word
+      totalScore: language.total_score, //total score from lang obj
+      answer: words[0].translation, // translation from current words obj in words arr
+      isCorrect: false, //setting default correct to false
     };
 
-    if (guess.toLowerCase() === list.head.value.translation) {
-      // add one to the correct count
-      list.head.value.correct_count++;
-
-      // Double the value of M (memory values)
-      list.head.value.memory_value *= 2;
-
-      // increase total score
+    //check if guess is right or wrong
+    if (guess.toLowerCase() === link.head.value.translation) {
+      //multiply mem val by 2
+      link.head.value.memory_value *= 2;
+      //add 1 to the correct counter
+      link.head.value.correct_count++;
+      //add 1 to the total score counter
       language.total_score += 1;
-
-      // make isCorrect to true
+      //this makes isCorrect key true
       response = { ...response, isCorrect: true };
     } else {
-      // increase incorrect count
-      list.head.value.incorrect_count++;
-
-      // reset M (memory value to 1)
-      list.head.value.memory_value = 1;
-
-      // make isCorrect to false
+      //add to incorrect count
+      link.head.value.incorrect_count++;
+      //mem val goes up by one
+      link.head.value.memory_value = 1;
+      //incorrect false
       response = { ...response, isCorrect: false };
     }
-    response.totalScore = language.total_score;
+    //grab memory value # from the current head
+    m = link.head.value.memory_value;
+    //setting temp = first value in LL
+    temp = link.head;
 
-    // store head in temp variable
-    let temp = list.head;
-    // store memory value from current head
-    let memVal = list.head.value.memory_value;
+    //while head && mem val is greater than 0
+    while (temp.next !== null && m > 0) {
+      //create temp variables
+      let toriginal = temp.value.original;
+      let ttranslation = temp.value.translation;
+      let tcorrect_count = temp.value.correct_count;
+      let tincorrect_count = temp.value.incorrect_count;
+      let tm = temp.value.memory_value;
 
-    // while head and memory value is greater than 0
-    while (temp.next !== null && memVal > 0) {
-      // create temp variables
-      let tempOriginal = temp.value.original;
-      let tempTranslation = temp.value.translation;
-      let tempCorrect_Count = temp.value.correct_count;
-      let tempIncorrect_Count = temp.value.incorrect_count;
-      let tempMemory_Value = temp.value.memory_value;
-      let tempId = temp.value.id;
-
-      // Move positions based on memory values to a new location
+      //move positions based on mem val to new location
       temp.value.original = temp.next.value.original;
       temp.value.translation = temp.next.value.translation;
       temp.value.correct_count = temp.next.value.correct_count;
       temp.value.incorrect_count = temp.next.value.incorrect_count;
       temp.value.memory_value = temp.next.value.memory_value;
-      temp.value.id = temp.next.value.id;
 
-      // reassign values to correct positions
-      temp.next.value.original = tempOriginal;
-      temp.next.value.translation = tempTranslation;
-      temp.next.value.correct_count = tempCorrect_Count;
-      temp.next.value.incorrect_count = tempIncorrect_Count;
-      temp.next.value.memory_value = tempMemory_Value;
-      temp.next.value.id = tempId;
+      //reassign values to correct positions
+      temp.next.value.original = toriginal;
+      temp.next.value.translation = ttranslation;
+      temp.next.value.correct_count = tcorrect_count;
+      temp.next.value.incorrect_count = tincorrect_count;
+      temp.next.value.memory_value = tm;
       temp = temp.next;
-      memVal--;
+      m--;
     }
 
-    let node = list.head;
-    while (node) {
-      node.value.next = node.next ? node.next.value.id : null;
-      node = node.next;
-    }
-    // first value in our altered linked list
-    let arrayTemp = list.head;
+    //this is the first val in our altered LL
+    let arrtemp = link.head;
+    //empty arr
+    let linkarr = [];
 
-    // create empty array
-    let linkArray = [];
-
-    // while arrayTemp head (first value) exists
-    while (arrayTemp) {
-      //push value from linked list into array
-      linkArray.push(arrayTemp.value);
-      // set next value to arrayTemp so it can be pushed into the array
-      arrayTemp = arrayTemp.next;
+    //whitle arrtemp(first val) exists
+    while (arrtemp) {
+      //push the value from the LL into the array
+      linkarr.push(arrtemp.value);
+      //this sets next val to be pushed into arr
+      arrtemp = arrtemp.next;
     }
 
-    language.head = list.head.value.id;
-    // update the current altered array and current score
-    LanguageService.insertNewLinkedList(spacedRepetitionDb, linkArray);
-    LanguageService.updateLanguageTotalScore(spacedRepetitionDb, language);
-    await LanguageService.updateHead(spacedRepetitionDb, language);
-    console.log(language, 'LANGUAGE');
-    // return res.status(200).json(response);
+    //this updates the current altered array and current score
+    LanguageService.insertNewLinkedList(req.app.get('db'), linkarr);
+    LanguageService.updateLanguagetotalScore(req.app.get('db'), language);
+
+    //send back response to client
     res.json(response), next();
+    //catch the error
   } catch (error) {
     next(error);
   }
