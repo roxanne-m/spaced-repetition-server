@@ -37,7 +37,7 @@ languageRouter.get('/', async (req, res, next) => {
     );
 
     res.json({
-      language: req.language,
+      language: LanguageService.serializeLanguage(req.language),
       words,
     });
     next();
@@ -48,20 +48,23 @@ languageRouter.get('/', async (req, res, next) => {
 
 languageRouter.get('/head', async (req, res, next) => {
   try {
-    let words = await LanguageService.getLanguageWords(
-      req.app.get('db'),
-      req.language.id
-    );
+    let words = [
+      ...(await LanguageService.getLanguageWords(
+        req.app.get('db'),
+        req.language.id
+      )),
+    ].sort((wordA, wordB) => wordA.memory_value - wordB.memory_value);
 
     const firstword = words[0];
+    const nextWord = words[1];
 
     res.json({
-      // ADDED WITH MIKE
       nextWord: firstword.original,
       wordCorrectCount: firstword.correct_count,
       wordIncorrectCount: firstword.incorrect_count,
       totalScore: req.language.total_score,
     });
+
     next();
   } catch (error) {
     next(error);
@@ -96,8 +99,8 @@ languageRouter.post('/guess', jsonBodyParser, async (req, res, next) => {
     //create response obj
     let response = {
       nextWord: words[1].original, //this is second word in array of words
-      wordCorrectCount: words[1].correct_count, //correct count from second word
-      wordIncorrectCount: words[1].incorrect_count, //incorrect count from second word
+      wordCorrectCount: words[0].correct_count, //correct count from second word
+      wordIncorrectCount: words[0].incorrect_count, //incorrect count from second word
       totalScore: language.total_score, //total score from lang obj
       answer: words[0].translation, // translation from current words obj in words arr
       isCorrect: false, //setting default correct to false
@@ -112,11 +115,12 @@ languageRouter.post('/guess', jsonBodyParser, async (req, res, next) => {
       //add 1 to the total score counter
       language.total_score += 1;
       //this makes isCorrect key true
-      // ADDED WITH MIKE
+
       response = {
         ...response,
         isCorrect: true,
         totalScore: language.total_score,
+        wordCorrectCount: link.head.value.correct_count,
       };
     } else {
       //add to incorrect count
@@ -124,10 +128,11 @@ languageRouter.post('/guess', jsonBodyParser, async (req, res, next) => {
       //mem val goes up by one
       link.head.value.memory_value = 1;
       //incorrect false
-      // ADDED WITH MIKE
+
       response = {
         ...response,
         isCorrect: false,
+        wordIncorrectCount: link.head.value.incorrect_count,
       };
     }
     //grab memory value # from the current head
@@ -135,62 +140,28 @@ languageRouter.post('/guess', jsonBodyParser, async (req, res, next) => {
     //setting temp = first value in LL
     temp = link.head;
 
-    //while head && mem val is greater than 0
-    while (temp.next !== null && m > 0) {
-      //create temp variables
-      let toriginal = temp.value.original;
-      let ttranslation = temp.value.translation;
-      let tcorrect_count = temp.value.correct_count;
-      let tincorrect_count = temp.value.incorrect_count;
-      let tm = temp.value.memory_value;
-
-      //move positions based on mem val to new location
-      temp.value.original = temp.next.value.original;
-      temp.value.translation = temp.next.value.translation;
-      temp.value.correct_count = temp.next.value.correct_count;
-      temp.value.incorrect_count = temp.next.value.incorrect_count;
-      temp.value.memory_value = temp.next.value.memory_value;
-
-      //reassign values to correct positions
-      temp.next.value.original = toriginal;
-      temp.next.value.translation = ttranslation;
-      temp.next.value.correct_count = tcorrect_count;
-      temp.next.value.incorrect_count = tincorrect_count;
-      temp.next.value.memory_value = tm;
-      temp = temp.next;
-      m--;
-    }
-
-    //this is the first val in our altered LL
-    let arrtemp = link.head;
-    //empty arr
-    let linkarr = [];
-
-    //whitle arrtemp(first val) exists
-    while (arrtemp) {
-      //push the value from the LL into the array
-      linkarr.push(arrtemp.value);
-      //this sets next val to be pushed into arr
-      arrtemp = arrtemp.next;
-    }
-
-    // ADDED WITH MIKE
-    response.nextWord = linkarr[0].original;
-
     //this updates the current altered array and current score
-    await LanguageService.insertNewLinkedList(req.app.get('db'), linkarr);
+    await LanguageService.insertNewLinkedList(
+      req.app.get('db'),
+      link.toArray()
+    );
     LanguageService.updateLanguagetotalScore(req.app.get('db'), language);
 
-    // ADDED WITH MIKE
-    let lowestWord = (
-      await LanguageService.getLanguageWords(req.app.get('db'), req.language.id)
-    ).sort((wordA, wordB) => wordA.memory_value - wordB.memory_value)[0];
+    let lowestWord = [
+      ...(await LanguageService.getLanguageWords(
+        req.app.get('db'),
+        req.language.id
+      )),
+    ].sort((wordA, wordB) => wordA.memory_value - wordB.memory_value)[0];
+
     LanguageService.SetLanguageHead(req.app.get('db'), language.id, {
       ...language,
-      head: lowestWord,
+      head: lowestWord.id,
     });
+
     //send back response to client
-    res.json(response), next();
+    res.json(response);
+    next();
     //catch the error
   } catch (error) {
     next(error);

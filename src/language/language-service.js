@@ -1,3 +1,5 @@
+const xss = require('xss');
+const clone = require('rfdc')();
 const LanguageService = {
   getUsersLanguage(db, user_id) {
     return db
@@ -26,14 +28,12 @@ const LanguageService = {
         'correct_count',
         'incorrect_count'
       )
-      .where({ language_id });
+      .where({ language_id })
+      .map(clone);
   },
 
-  // ADDED WITH MIKE
   async SetLanguageHead(db, language_id, language) {
-    await db('language')
-      .where('language_id', '=', language_id)
-      .update(language);
+    await db('language').where('id', '=', language_id).update(language);
   },
 
   async PopulateLinkedlist(db, language_id, ll) {
@@ -51,12 +51,12 @@ const LanguageService = {
       )
       .where({ language_id });
     //a.map is populating the LL
-    // SORT ADDED WITH MIKE
-    a.sort(
-      (wordA, wordB) => wordA.memory_value - wordB.memory_value
-    ).map((word) => ll.insertLast(word));
-    //return a is returning the aray of words from db
-    return a;
+
+    let b = a.map(clone);
+    b = b.sort((wordA, wordB) => wordA.memory_value - wordB.memory_value);
+    b.forEach((word) => ll.insertLast(word));
+    //return a is returning the array of words from db
+    return b;
   },
 
   async insertNewLinkedList(db, ll) {
@@ -70,6 +70,16 @@ const LanguageService = {
     await db('language')
       .where('user_id', '=', language.user_id)
       .update(language);
+  },
+
+  serializeLanguage(language) {
+    return {
+      id: language.id,
+      name: xss(language.name),
+      totalScore: language.total_score,
+      userId: language.user_id,
+      head: language.head,
+    };
   },
 };
 

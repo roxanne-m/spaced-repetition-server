@@ -89,6 +89,16 @@ class LinkedList {
     }
     return node;
   }
+
+  toArray() {
+    let node = this.head;
+    let result = [];
+    while (node) {
+      result.push(node.value);
+      node = node.next;
+    }
+    return result;
+  }
 }
 
 module.exports = LinkedList;
